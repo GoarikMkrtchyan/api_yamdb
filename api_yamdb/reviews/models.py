@@ -79,6 +79,15 @@ class Title(models.Model):
         blank=True,
         null=True
     )
+    # Добавил поле
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+
+    # метод для расчёта среднего рейтинга
+    def update_rating(self):
+        reviews = self.reviews.all()
+        total_score = sum(review.score for review in reviews)
+        self.rating = total_score / reviews.count() if reviews.exists() else 0
+        self.save()
 
     class Meta:
         ordering = ['name']
@@ -111,3 +120,21 @@ class GenreTitle(models.Model):
     def __str__(self):
         return f"{self.title} - {self.genre}"  
 
+
+class Review(models.Model):
+    """Model Отзыв"""
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    text = models.TextField()
+    score = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Comment(models.Model):
+    """Model Комментарий"""
+    review = models.ForeignKey(Review,
+                               related_name='comments',
+                               on_delete=models.CASCADE)
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -18,9 +18,9 @@ from .permissions import IsAdminOrReadOnly
 from .serializers import (
     RegisterSerializer, LoginSerializer, EmailVerificationSerializer,
     VerifyCodeSerializer, CategorySerializer, GenreSerializer,
-    TitleSerializer
+    TitleSerializer, ReviewSerializer, CommentSerializer,
 )
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, Review, Comment
 
 User = get_user_model()
 
@@ -92,7 +92,7 @@ class VerifyCodeView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
-      
+
 class CategoryViewSet(CategoryGenreMixinViewSet):
     """ViewSet категорий."""
 
@@ -131,3 +131,28 @@ class TitleViewSet(viewsets.ModelViewSet):
             slug__in=self.request.data.getlist('genre')
         )
         serializer.save(category=category, genre=genre)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+    # Переопределил методы создания отзыва, чтобы
+    # рейтинг произведений пересчитывался и создавался в базе
+    def perform_create(self, serializer):
+        review = serializer.save()
+        review.title.update_rating()
+
+    def perform_update(self, serializer):
+        review = serializer.save()
+        review.title.update_rating()
+
+    def perform_destroy(self, instance):
+        title = instance.title
+        super().perform_destroy(instance)
+        title.update_rating()
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
