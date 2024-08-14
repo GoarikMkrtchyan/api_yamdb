@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,6 +22,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'rest_framework_simplejwt',
+    'api',
+    'reviews',
 ]
 
 MIDDLEWARE = [
@@ -101,3 +108,26 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+
+AUTH_USER_MODEL = 'reviews.CustomUser'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.your-email-provider.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@example.com'
+EMAIL_HOST_PASSWORD = 'your-email-password'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
