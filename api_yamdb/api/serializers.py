@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from reviews.models import Category, Genre, Title
+
 User = get_user_model()
 
 
@@ -36,3 +38,29 @@ class EmailVerificationSerializer(serializers.Serializer):
 class VerifyCodeSerializer(serializers.Serializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
+
+    
+class CategorySerializer(serializers.ModelSerializer):
+    """Serializer категорий."""
+
+    class Meta:
+        model = Category
+        exclude = ('id',)
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    """Serializer жанров."""
+
+    class Meta:
+        model = Genre
+        exclude = ('id',)
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    """Serializer произведений."""
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Title
+        fields = '__all__'

@@ -1,7 +1,19 @@
-from django.urls import path
-from .views import RegisterView, LoginView, LogoutView, EmailVerificationView, VerifyCodeView
+from rest_framework.routers import DefaultRouter
+from django.urls import include, path
+
+from .views import (
+  CategoryViewSet, GenreViewSet, TitleViewSetRegisterView,
+  LoginView, LogoutView, EmailVerificationView, VerifyCodeView
+)
+
+router_v1 = DefaultRouter()
+
+router_v1.register(r'titles', TitleViewSet, basename='titles')
+router_v1.register(r'categories', CategoryViewSet, basename='categories')
+router_v1.register(r'genres', GenreViewSet, basename='genres')
 
 urlpatterns = [
+    path('v1/', include(router_v1.urls)),
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
