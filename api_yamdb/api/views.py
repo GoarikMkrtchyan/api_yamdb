@@ -1,15 +1,98 @@
+import secrets
+
+from django.contrib.auth import authenticate, get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 from .mixin import CategoryGenreMixinViewSet
 from .permissions import IsAdminOrReadOnly
-from .serializers import (CategorySerializer, GenreSerializer,
-                          TitleSerializer)
+from .serializers import (
+    RegisterSerializer, LoginSerializer, EmailVerificationSerializer,
+    VerifyCodeSerializer, CategorySerializer, GenreSerializer,
+    TitleSerializer
+)
 from reviews.models import Category, Genre, Title
 
+User = get_user_model()
 
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+
+    
+class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password']
+        )
+
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            token = request.data['token']
+            token_obj = RefreshToken(token)
+            token_obj.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class EmailVerificationView(APIView):
+    def post(self, request):
+        serializer = EmailVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        confirmation_code = secrets.token_urlsafe(8)[:6]
+        # Отправка письма с кодом подтверждения
+        send_mail(
+            'Ваш код подтверждения',
+            f'Ваш код подтверждения: {confirmation_code}',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+        )
+
+        return Response({'message': 'Код подтверждения отправлен на email'})
+
+
+class VerifyCodeView(APIView):
+    def post(self, request):
+        serializer = VerifyCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data['username']
+        confirmation_code = serializer.validated_data['confirmation_code']
+
+        # Проверка кода подтверждения (предполагается, что он хранится в базе данных или кэше)
+        if confirmation_code == '123456':
+            user = User.objects.get(username=username)
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
+      
 class CategoryViewSet(CategoryGenreMixinViewSet):
     """ViewSet категорий."""
 
