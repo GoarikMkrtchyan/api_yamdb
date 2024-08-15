@@ -1,22 +1,34 @@
+import secrets
+
 from django.contrib.auth import authenticate, get_user_model
 from django.core.mail import send_mail
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
+from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+
+from .mixin import CategoryGenreMixinViewSet
+from .permissions import IsAdminOrReadOnly
 from .serializers import (
     RegisterSerializer, LoginSerializer, EmailVerificationSerializer,
-    VerifyCodeSerializer
+    VerifyCodeSerializer, CategorySerializer, GenreSerializer,
+    TitleSerializer
 )
-from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
-import secrets
+from reviews.models import Category, Genre, Title
 
 User = get_user_model()
+
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
+    
 class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -80,3 +92,43 @@ class VerifyCodeView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CategoryViewSet(CategoryGenreMixinViewSet):
+    """ViewSet категорий."""
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(CategoryGenreMixinViewSet):
+    """ViewSet жанров."""
+
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    """ViewSet произведений."""
+
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('name', 'year', 'genre__slug', 'category__slug')
+
+    def perform_create(self, serializer):
+        self.save_title(serializer)
+
+    def perform_update(self, serializer):
+        self.save_title(serializer)
+
+    def save_title(self, serializer):
+        category = get_object_or_404(
+            Category, slug=self.request.data.get('category')
+        )
+        genre = Genre.objects.filter(
+            slug__in=self.request.data.getlist('genre')
+        )
+        serializer.save(category=category, genre=genre)
