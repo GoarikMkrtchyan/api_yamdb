@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 import uuid
 
@@ -126,8 +127,14 @@ class Review(models.Model):
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     text = models.TextField()
-    score = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    score = models.IntegerField(MinValueValidator(1), MaxValueValidator(10))
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'user'],
+                                    name='unique_review')
+        ]
 
 
 class Comment(models.Model):
@@ -137,4 +144,4 @@ class Comment(models.Model):
                                on_delete=models.CASCADE)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(auto_now_add=True)

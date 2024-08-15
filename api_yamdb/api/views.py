@@ -14,7 +14,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
 from .mixin import CategoryGenreMixinViewSet
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, IsStuffOrAuthor
 from .serializers import (
     RegisterSerializer, LoginSerializer, EmailVerificationSerializer,
     VerifyCodeSerializer, CategorySerializer, GenreSerializer,
@@ -59,6 +59,7 @@ class LogoutView(APIView):
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
 class EmailVerificationView(APIView):
     def post(self, request):
         serializer = EmailVerificationSerializer(data=request.data)
@@ -92,6 +93,7 @@ class VerifyCodeView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryViewSet(CategoryGenreMixinViewSet):
     """ViewSet категорий."""
@@ -136,15 +138,25 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = (IsStuffOrAuthor,)
 
-    # Переопределил методы создания отзыва, чтобы
-    # рейтинг произведений пересчитывался и создавался в базе
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        if title_id is not None:
+            return Review.objects.filter(title_id=title_id)
+        return Review.objects.none()
+
     def perform_create(self, serializer):
-        review = serializer.save()
+        title_id = self.kwargs.get('title_id')
+        title = Title.objects.get(pk=title_id)
+        review = serializer.save(title=title, author=self.request.user)
         review.title.update_rating()
 
     def perform_update(self, serializer):
-        review = serializer.save()
+        title_id = self.kwargs.get('title_id')
+        title = Title.objects.get(pk=title_id)
+        review = serializer.save(title=title, author=self.request.user)
         review.title.update_rating()
 
     def perform_destroy(self, instance):
@@ -156,3 +168,21 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = (IsStuffOrAuthor,)
+
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        if review_id is not None:
+            return Comment.objects.filter(review_id=review_id)
+        return Comment.objects.none()
+
+    def perform_create(self, serializer):
+        review_id = self.kwargs.get('review_id')
+        review = Review.objects.get(pk=review_id)
+        serializer.save(review=review, author=self.request.user)
+
+    def perform_update(self, serializer):
+        review_id = self.kwargs.get('review_id')
+        review = Review.objects.get(pk=review_id)
+        serializer.save(review=review, author=self.request.user)

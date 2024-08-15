@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.forms import ValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -68,13 +69,27 @@ class TitleSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer отзывов."""
+
     class Meta:
         model = Review
-        fields = ['text', 'score']
+        fields = ['id', 'text', 'score', 'author', 'pub_date']
+
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        return Review.objects.filter(title_id=title_id)
+
+    def perform_create(self, serializer):
+        title_id = self.kwargs.get('title_id')
+        title = Title.objects.get(pk=title_id)
+
+        if Review.objects.filter(title=title, user=self.request.user).exists():
+            raise ValidationError("Вы уже оставляли отзыв на это произведение")
+
+        serializer.save(title=title, user=self.request.user)
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer комментариев."""
     class Meta:
         model = Comment
-        fields = ['text']
+        fields = ['id', 'text', 'author', 'pub_date']
