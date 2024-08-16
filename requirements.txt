@@ -1,7 +1,11 @@
 requests==2.26.0
 Django==3.2
 djangorestframework==3.12.4
+<<<<<<< HEAD
 djangorestframework-simplejwt==5.3.1
+=======
+djangorestframework-simplejwt-5.3.1
+>>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 django-filter==23.1
 PyJWT==2.1.0
 pytest==6.2.4
