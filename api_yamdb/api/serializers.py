@@ -1,20 +1,29 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Category, CustomUser, Genre, Title
 
+<<<<<<< HEAD
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
+                  'role', 'confirmation_code')
+=======
 from reviews.models import Category, Genre, Title
 
 User = get_user_model()
+>>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = CustomUser
         fields = ('username', 'password', 'email')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        user = CustomUser.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
             email=validated_data['email']
@@ -28,7 +37,26 @@ class LoginSerializer(serializers.Serializer):
 
 
 class TokenSerializer(serializers.Serializer):
-    token = serializers.CharField()
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
+
+    def validate(self, data):
+        username = data.get('username')
+        confirmation_code = data.get('confirmation_code')
+
+        try:
+            user = CustomUser.objects.get(username=username)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Invalid username")
+
+        # Валидация кода подтверждения
+        if user.confirmation_code != confirmation_code:
+            raise serializers.ValidationError("Invalid confirmation code")
+
+        # Генерация токена
+        return {
+            'token': str(AccessToken.for_user(user))
+        }
 
 
 class EmailVerificationSerializer(serializers.Serializer):
@@ -39,7 +67,11 @@ class VerifyCodeSerializer(serializers.Serializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer категорий."""
 

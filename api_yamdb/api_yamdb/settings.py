@@ -1,6 +1,5 @@
-from pathlib import Path
 from datetime import timedelta
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +27,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'api.apps.ApiConfig',
+<<<<<<< HEAD
+    'reviews',
+=======
     'reviews.apps.ReviewsConfig',
+>>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 ]
 
 MIDDLEWARE = [
@@ -119,7 +122,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+<<<<<<< HEAD
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+=======
    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+>>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
     'PAGE_SIZE': 10,
 }
 
@@ -128,6 +135,8 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken', 'rest_framework_simplejwt.tokens.RefreshToken'),
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
