@@ -142,19 +142,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = (IsStuffOrAuthor,)
 
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
+        title_id = get_object_or_404(Title, title_id='title_id')
         if title_id is not None:
             return Review.objects.filter(title_id=title_id)
         return Review.objects.none()
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
+        title_id = get_object_or_404(Title, title_id='title_id')
         title = Title.objects.get(pk=title_id)
         review = serializer.save(title=title, author=self.request.user)
         review.title.update_rating()
 
     def perform_update(self, serializer):
-        title_id = self.kwargs.get('title_id')
+        title_id = get_object_or_404(Title, title_id='title_id')
         title = Title.objects.get(pk=title_id)
         review = serializer.save(title=title, author=self.request.user)
         review.title.update_rating()
@@ -172,17 +172,17 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsStuffOrAuthor,)
 
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
+        review_id = get_object_or_404(Review, review_id='review_id')
         if review_id is not None:
             return Comment.objects.filter(review_id=review_id)
         return Comment.objects.none()
 
     def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
+        review_id = get_object_or_404(Review, review_id='review_id')
         review = Review.objects.get(pk=review_id)
         serializer.save(review=review, author=self.request.user)
 
     def perform_update(self, serializer):
-        review_id = self.kwargs.get('review_id')
+        review_id = get_object_or_404(Review, review_id='review_id')
         review = Review.objects.get(pk=review_id)
         serializer.save(review=review, author=self.request.user)
