@@ -3,8 +3,6 @@ from django.db import models
 
 from .validators import validate_year
 
-from .validators import validate_year
-
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -33,11 +31,6 @@ class CustomUser(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == 'moderator'
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 
 class Category(models.Model):
     """Model категории."""
@@ -118,9 +111,4 @@ class GenreTitle(models.Model):
         ]
 
     def __str__(self):
-<<<<<<< HEAD
         return f"{self.title} - {self.genre}"
-=======
-        return f"{self.title} - {self.genre}"  
-
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e

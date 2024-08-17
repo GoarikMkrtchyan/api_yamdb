@@ -27,11 +27,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'api.apps.ApiConfig',
-<<<<<<< HEAD
-    'reviews',
-=======
     'reviews.apps.ReviewsConfig',
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 ]
 
 MIDDLEWARE = [
@@ -122,11 +118,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
-<<<<<<< HEAD
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-=======
-   'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
     'PAGE_SIZE': 10,
 }
 
@@ -143,6 +135,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.your-email-provider.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False 
 EMAIL_HOST_USER = 'your-email@example.com'
 EMAIL_HOST_PASSWORD = 'your-email-password'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

@@ -2,18 +2,12 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, CustomUser, Genre, Title
 
-<<<<<<< HEAD
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'first_name', 'last_name', 'bio',
                   'role', 'confirmation_code')
-=======
-from reviews.models import Category, Genre, Title
-
-User = get_user_model()
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -67,11 +61,7 @@ class VerifyCodeSerializer(serializers.Serializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer категорий."""
 

@@ -1,43 +1,17 @@
 import secrets
-<<<<<<< HEAD
-=======
-
-from django.contrib.auth import authenticate, get_user_model
-from django.core.mail import send_mail
-from django.conf import settings
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.views import APIView
-from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
-
-from .mixin import CategoryGenreMixinViewSet
-from .permissions import IsAdminOrReadOnly
-from .serializers import (
-    RegisterSerializer, LoginSerializer, EmailVerificationSerializer,
-    VerifyCodeSerializer, CategorySerializer, GenreSerializer,
-    TitleSerializer
-)
-from reviews.models import Category, Genre, Title
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, permissions, viewsets
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import Category, CustomUser, Genre, Title
 
-<<<<<<< HEAD
 from .mixin import CategoryGenreMixinViewSet
 from .permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer, CustomUserSerializer,
@@ -49,14 +23,17 @@ from .serializers import (CategorySerializer, CustomUserSerializer,
 class RegisterViewSet(viewsets.ModelViewSet):
     """ViewSet для регистрации пользователя."""
     queryset = CustomUser.objects.all()
-=======
-
-class RegisterView(generics.CreateAPIView):
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
+    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
-    http_method_names = ['get', 'post']
 
-<<<<<<< HEAD
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({"message": "User registered successfully"},
+                            status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class TokenViewSet(viewsets.ViewSet):
     """ViewSet для получения токена."""
@@ -89,45 +66,46 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 class LoginViewSet(viewsets.ViewSet):
     """ViewSet для входа пользователя."""
-    def create(self, request):
-=======
-    
-class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
         serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        user = authenticate(
-            username=serializer.validated_data['username'],
-            password=serializer.validated_data['password']
-        )
-
-        if user:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            })
-        return Response({'error': 'Invalid credentials'}, status=401)
+        if serializer.is_valid():
+            email = serializer.data['email']
+            password = serializer.data['password']
+            user = authenticate(request, email=email, password=password)
+            if user is not None:
+                refresh = RefreshToken.for_user(user)
+                return Response({'refresh': str(refresh),
+                                 'access': str(refresh.access_token),
+                                 'message': 'User logged in successfully'},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid credentials'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutViewSet(viewsets.ViewSet):
     """ViewSet для выхода пользователя."""
     permission_classes = [IsAuthenticated]
 
-    def create(self, request):
-        token = request.data.get('token')
-        if not token:
-            return Response({'error': 'Token not provided'}, status=400)
-
-        token_obj = RefreshToken(token)
-        token_obj.blacklist()
-        return Response(status=205)
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "User logged out successfully"},
+                            status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmailVerificationViewSet(viewsets.ViewSet):
     """ViewSet для верификации email."""
+    permission_classes = [AllowAny]
+
     def create(self, request):
         serializer = EmailVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -151,6 +129,8 @@ class EmailVerificationViewSet(viewsets.ViewSet):
 
 class VerifyCodeViewSet(viewsets.ViewSet):
     """ViewSet для проверки кода подтверждения."""
+    permission_classes = [AllowAny]
+
     def create(self, request):
         serializer = VerifyCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -158,7 +138,6 @@ class VerifyCodeViewSet(viewsets.ViewSet):
         username = serializer.validated_data['username']
         confirmation_code = serializer.validated_data['confirmation_code']
 
-<<<<<<< HEAD
         try:
             user = CustomUser.objects.get(username=username)
             if user.confirmation_code == confirmation_code:
@@ -172,18 +151,6 @@ class VerifyCodeViewSet(viewsets.ViewSet):
             return Response({'error': 'User not found'}, status=404)
 
 
-=======
-        # Проверка кода подтверждения (предполагается, что он хранится в базе данных или кэше)
-        if confirmation_code == '123456':
-            user = User.objects.get(username=username)
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            })
-        return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
-      
->>>>>>> dbc8d050a315564b8d5f94ba096f581e6c85e70e
 class CategoryViewSet(CategoryGenreMixinViewSet):
     """ViewSet категорий."""
 
