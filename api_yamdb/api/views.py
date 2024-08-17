@@ -6,18 +6,22 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from reviews.models import Category, CustomUser, Genre, Title
 
 from .mixin import CategoryGenreMixinViewSet
 from .permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer, CustomUserSerializer,
                           EmailVerificationSerializer, GenreSerializer,
-                          LoginSerializer, RegisterSerializer, TitleSerializer,
-                          TokenSerializer, VerifyCodeSerializer)
+                          LoginSerializer, RegisterSerializer,
+                          SignUpSerializer, TitleSerializer, TokenSerializer,
+                          VerifyCodeSerializer)
 
 
 class RegisterViewSet(viewsets.ModelViewSet):
@@ -56,7 +60,19 @@ class TokenViewSet(viewsets.ViewSet):
         return Response({"token": token})
 
 
+class SignUpViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = SignUpSerializer
+
+    def create(self, request):
+        serializer = SignUpSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserProfileView(generics.RetrieveUpdateAPIView):
+    """View для получения и обновления профиля пользователя."""
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 

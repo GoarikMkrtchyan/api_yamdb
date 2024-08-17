@@ -2,14 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, EmailVerificationViewSet, GenreViewSet,
-                    LoginViewSet, LogoutViewSet, RegisterViewSet, TitleViewSet,
-                    TokenViewSet, UserProfileView, VerifyCodeViewSet)
-
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
-from .views import (CategoryViewSet, EmailVerificationViewSet, GenreViewSet,
-                    LoginViewSet, LogoutViewSet, RegisterViewSet, TitleViewSet,
+                    LoginViewSet, LogoutViewSet, RegisterViewSet,
+                    SignUpViewSet, TitleViewSet, TokenViewSet, UserProfileView,
                     VerifyCodeViewSet)
 
 router_v1 = DefaultRouter()
@@ -27,9 +21,9 @@ router_v1.register(r'token', TokenViewSet, basename='token')
 
 urlpatterns = [
     path('api/v1/', include(router_v1.urls)),
-    path('api/v1/users/me/', UserProfileView.as_view(), name='user-profile'),
-    path('api/v1/auth/signup/', RegisterViewSet.as_view({'get': 'list'}),
-         name='signup'),
-    path('api/v1/auth/token/', TokenViewSet.as_view({'get': 'list'}),
+    path('api/v1/auth/token/', TokenViewSet.as_view({'post': 'create'}),
          name='token'),
+    path('api/v1/users/me/', UserProfileView.as_view(), name='user-profile'),
+    path('api/v1/auth/signup/',
+         SignUpViewSet.as_view({'post': 'create'}), name='signup'),
 ]
