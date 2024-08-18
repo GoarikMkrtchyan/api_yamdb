@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from users.models import User
 from .validators import validate_year
 
 
@@ -89,15 +89,16 @@ class GenreTitle(models.Model):
 class Review(models.Model):
     """Model Отзыв."""
 
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
     text = models.TextField()
-    score = models.IntegerField(MinValueValidator(1), MaxValueValidator(10))
+    score = models.IntegerField(validators=(MinValueValidator(1),
+                                            MaxValueValidator(10)))
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['title', 'user'],
+            models.UniqueConstraint(fields=['title', 'author'],
                                     name='unique_review')
         ]
 
@@ -110,7 +111,7 @@ class Comment(models.Model):
     review = models.ForeignKey(Review,
                                related_name='comments',
                                on_delete=models.CASCADE)
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
         
