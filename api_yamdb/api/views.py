@@ -5,9 +5,16 @@ from django.shortcuts import get_object_or_404
 
 from .mixin import CategoryGenreMixinViewSet
 from .permissions import IsAdminOrReadOnly, IsStuffOrAuthor
-from .serializers import (CategorySerializer, CommentSerializer, GenreSerializer, ReviewSerializer,
+from .serializers import (CategorySerializer,
+                          CommentSerializer,
+                          GenreSerializer,
+                          ReviewSerializer,
                           TitleSerializer)
-from reviews.models import Category, Genre, Title, Review, Comment
+from reviews.models import (Category,
+                            Genre,
+                            Title,
+                            Review,
+                            Comment)
 
 
 class CategoryViewSet(CategoryGenreMixinViewSet):
