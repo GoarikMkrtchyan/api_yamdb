@@ -8,12 +8,18 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class IsStuffOrAuthor(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        elif request.user.is_admin:
+        elif request.user.is_admin and request.user.is_authenticated:
             return True
-        elif request.user.is_moderator:
+        elif request.user.is_moderator and request.user.is_authenticated:
             return True
-        else:
-            return request.user == obj.user
+        elif request.user.is_authenticated:
+            return request.user == obj.author
+        return False

@@ -91,13 +91,14 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.genre}"
-    
+
 
 class Review(models.Model):
     """Model Отзыв."""
 
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              related_name="reviews")
     text = models.TextField()
     score = models.IntegerField(validators=(MinValueValidator(1),
                                             MaxValueValidator(10)))
@@ -121,6 +122,31 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
-        
+
     def __str__(self):
         return (self.text)
+
+
+class ReviewTitle(models.Model):
+    """Model произведение-отзыв."""
+
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='review_titles'
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='review_titles'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title_id', 'review_id'],
+                name='unique_review_title')
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.review}"

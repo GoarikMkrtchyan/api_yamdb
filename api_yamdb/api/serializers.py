@@ -2,6 +2,16 @@ from django.forms import ValidationError
 from rest_framework import serializers
 
 from reviews.models import Category, Genre, Title, Review, Comment
+from users.models import User
+
+
+# добавил, так как в моих отзывах некорректно сериализируется автор
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer пользователя."""
+
+    class Meta:
+        model = User
+        fields = ['username']
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -32,6 +42,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer отзывов."""
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -50,6 +61,10 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise ValidationError("Вы уже оставили отзыв на это произведение.")
 
         return data
+
+    def get_author(self, obj):
+        # Возвращаем только имя пользователя
+        return obj.author.username
 
 
 class CommentSerializer(serializers.ModelSerializer):
