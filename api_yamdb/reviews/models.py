@@ -53,6 +53,7 @@ class Title(models.Model):
         blank=True,
         null=True
     )
+    rating = models.IntegerField(default=0)
 
     # метод для расчёта среднего рейтинга
     def update_rating(self):

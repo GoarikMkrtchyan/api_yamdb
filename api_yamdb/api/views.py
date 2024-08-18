@@ -63,6 +63,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsStuffOrAuthor,)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
         # Получаем `title_id` из параметров запроса (URL)
@@ -78,9 +79,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         review.title.update_rating()
 
     def perform_update(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
-        review = serializer.save(title=title, author=self.request.user)
+        review = serializer.save()
         review.title.update_rating()
 
     def perform_destroy(self, instance):
@@ -94,6 +93,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsStuffOrAuthor,)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
         # Получаем `review_id` из параметров запроса (URL)
@@ -108,6 +108,4 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(review=review, author=self.request.user)
 
     def perform_update(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
-        serializer.save(review=review, author=self.request.user)
+        serializer.save()

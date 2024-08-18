@@ -69,6 +69,13 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer комментариев."""
+    author = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = ['id', 'text', 'author', 'pub_date']
+        fields = ['id', 'text', 'author', 'pub_date', 'review']
+        read_only_fields = ['author', 'pub_date', 'review']
+
+    def get_author(self, obj):
+        # Возвращаем только имя пользователя
+        return obj.author.username
