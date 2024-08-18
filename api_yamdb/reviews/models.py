@@ -54,6 +54,13 @@ class Title(models.Model):
         null=True
     )
 
+    # метод для расчёта среднего рейтинга
+    def update_rating(self):
+        reviews = self.reviews.all()
+        total_score = sum(review.score for review in reviews)
+        self.rating = total_score / reviews.count() if reviews.exists() else 0
+        self.save()
+
     class Meta:
         ordering = ['name']
 
