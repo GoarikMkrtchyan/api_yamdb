@@ -17,12 +17,16 @@ class User(AbstractUser):
     ]
     username = models.SlugField(max_length=150, unique=True)
     email = models.EmailField(max_length=254, unique=True)
-    first_name = models.CharField(max_length=150, blank=True, null=True)
-    last_name = models.CharField(max_length=150, blank=True, null=True)
-    bio = models.TextField(blank=True, null=True)
-    role = models.SlugField(choices=ROLES, default=USER)
-    confirmation_code = models.CharField(max_length=6, blank=True, null=True)
-    confirmation_code_expiry = models.DateTimeField(blank=True, null=True)
+    bio = models.TextField(blank=True)
+    role = models.SlugField(choices=ROLES,
+                            default=USER)
+    first_name = models.CharField('Имя',
+                                  max_length=150,
+                                  blank=True)
+    last_name = models.CharField('Фамилия',
+                                 max_length=150,
+                                 blank=True)
+    confirmation_code = models.SlugField(null=True, blank=True, unique=True)
 
     class Meta:
         ordering = ['id']

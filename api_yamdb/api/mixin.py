@@ -17,4 +17,5 @@ class CategoryGenreMixinViewSet(
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = [SearchFilter]
     search_fields = ['=name']
+    lookup_field = 'slug'
     pagination_class = PageNumberPagination
