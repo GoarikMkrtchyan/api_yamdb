@@ -39,7 +39,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         if request.user.role != 'admin':
             return Response({'detail': 'Not authorized to create users'}, status=status.HTTP_403_FORBIDDEN)
-        return super().create(request, *args, **kwargs)
+        response = super().create(request, *args, **kwargs)
+        user = self.get_object()
+        send_confirmation_code(user)
+        return response
 
     def update(self, request, *args, **kwargs):
         if request.user.role != 'admin':
@@ -85,9 +88,9 @@ class TokenViewSet(APIView):
     """ViewSet для получения токена."""
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
+        if not request.data:
+            return Response({"error": "No data provided"}, status=status.HTTP_400_BAD_REQUEST)
         if serializer.is_valid():
-            serializer.is_valid(raise_exception=True)
-
             username = serializer.validated_data['username']
             confirmation_code = serializer.validated_data['confirmation_code']
 
@@ -96,9 +99,8 @@ class TokenViewSet(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Invalid username"}, status=400)
 
-            if user.confirmation_code != confirmation_code < timezone.now():
-                return Response({"error": "Invalid or expired confirmation code"},
-                                status=400)
+            if user.confirmation_code != confirmation_code or timezone.now() > user.confirmation_code_expiration:
+                return Response({"error": "Invalid or expired confirmation code"}, status=400)
 
             token = str(RefreshToken.for_user(user))
             return Response({"token": token})
