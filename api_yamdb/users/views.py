@@ -21,51 +21,17 @@ class IsAdmin(BasePermission):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminOrSelf]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['username']
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            self.permission_classes = [IsAdminOrReadOnly]
-        elif self.action in ['create']:
-            self.permission_classes = [IsAdminOrReadOnly]
-        elif self.action in ['update', 'partial_update']:
-            self.permission_classes = [IsAdminOrSelf]
-        elif self.action in ['destroy']:
-            self.permission_classes = [IsAdminOrReadOnly]
-        return super().get_permissions()
-
-    def create(self, request, *args, **kwargs):
-        if request.user.role != 'admin':
-            return Response({'detail': 'Not authorized to create users'}, status=status.HTTP_403_FORBIDDEN)
-        response = super().create(request, *args, **kwargs)
-        user = self.get_object()
-        send_confirmation_code(user)
-        return response
-
-    def update(self, request, *args, **kwargs):
-        if request.user.role != 'admin':
-            return Response({'detail': 'Not authorized to update users'}, status=status.HTTP_403_FORBIDDEN)
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        # Ensure username is in kwargs
-        if 'username' in kwargs:
-            user = self.get_object()
-            if request.user.role != 'admin' and request.user != user:
-                return Response({'detail': 'Not authorized to update this user'}, status=status.HTTP_403_FORBIDDEN)
-        return super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if request.user.role != 'admin':
-            return Response({'detail': 'Not authorized to delete users'}, status=status.HTTP_404_NOT_FOUND)
-        return super().destroy(request, *args, **kwargs)
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        if 'username' in self.kwargs:
-            return User.objects.get(username=self.kwargs['username'])
-        return super().get_object()
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
 
 class SignUpViewSet(APIView):
@@ -80,7 +46,8 @@ class SignUpViewSet(APIView):
             user, created = User.objects.get_or_create(username=username, email=email)
             if created:
                 send_confirmation_code(user)
-            return Response({'email': email, 'username': username}, status=status.HTTP_200_OK)
+                return Response({'email': email, 'username': username}, status=status.HTTP_200_OK)
+            return Response({'email': email, 'username': username}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -88,9 +55,9 @@ class TokenViewSet(APIView):
     """ViewSet для получения токена."""
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
-        if not request.data:
-            return Response({"error": "No data provided"}, status=status.HTTP_400_BAD_REQUEST)
         if serializer.is_valid():
+            serializer.is_valid(raise_exception=True)
+
             username = serializer.validated_data['username']
             confirmation_code = serializer.validated_data['confirmation_code']
 
@@ -99,8 +66,9 @@ class TokenViewSet(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Invalid username"}, status=400)
 
-            if user.confirmation_code != confirmation_code or timezone.now() > user.confirmation_code_expiration:
-                return Response({"error": "Invalid or expired confirmation code"}, status=400)
+            if user.confirmation_code != confirmation_code < timezone.now():
+                return Response({"error": "Invalid or expired confirmation code"},
+                                status=400)
 
             token = str(RefreshToken.for_user(user))
             return Response({"token": token})
@@ -115,12 +83,11 @@ class CurrentUserViewSet(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
-        serializer = UserSerializer(request.user,
-                                    data=request.data, partial=True)
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request):
+    def delete(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -4,6 +4,10 @@ from users.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer user."""
+    username = serializers.RegexField(regex=r'^[\w.@+-]+\Z', max_length=150)
+    email = serializers.EmailField(max_length=254)
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
 
     class Meta:
         model = User
