@@ -1,5 +1,6 @@
 from django.db import models
-
+from django.core.validators import MinValueValidator, MaxValueValidator
+from users.models import User
 from .validators import validate_year
 
 
@@ -52,6 +53,14 @@ class Title(models.Model):
         blank=True,
         null=True
     )
+    rating = models.IntegerField(default=0)
+
+    # метод для расчёта среднего рейтинга
+    def update_rating(self):
+        reviews = self.reviews.all()
+        total_score = sum(review.score for review in reviews)
+        self.rating = total_score / reviews.count() if reviews.exists() else 0
+        self.save()
 
     class Meta:
         ordering = ['name']
@@ -83,3 +92,62 @@ class GenreTitle(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.genre}"
+
+
+class Review(models.Model):
+    """Model Отзыв."""
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              related_name="reviews")
+    text = models.TextField()
+    score = models.IntegerField(validators=(MinValueValidator(1),
+                                            MaxValueValidator(10)))
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'author'],
+                                    name='unique_review')
+        ]
+
+    def __str__(self):
+        return (self.text)
+
+
+class Comment(models.Model):
+    """Model Комментарий."""
+    review = models.ForeignKey(Review,
+                               related_name='comments',
+                               on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return (self.text)
+
+
+class ReviewTitle(models.Model):
+    """Model произведение-отзыв."""
+
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='review_titles'
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='review_titles'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title_id', 'review_id'],
+                name='unique_review_title')
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.review}"

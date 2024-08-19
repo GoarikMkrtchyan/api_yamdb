@@ -32,3 +32,7 @@ class User(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR
+
+    # # Добавил, чтобы в сериализаторе поля автор был не айди, а имя
+    # def __str__(self):
+    #     return (self.username)
