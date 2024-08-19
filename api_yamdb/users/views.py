@@ -109,22 +109,16 @@ class CurrentUserViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Возвращает информацию о текущем пользователе."""
         serializer = UserSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
     def patch(self, request):
-        """Частичное обновление данных текущего пользователя."""
-        # Удаление поля 'role' из данных запроса, чтобы предотвратить его изменение
-        if 'role' in request.data:
-            request.data.pop('role')
-
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(request.user,
+                                    data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
-        """Удаление текущего пользователя не разрешено."""
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

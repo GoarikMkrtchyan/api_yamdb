@@ -2,7 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
+import random
+import string
 
 
 class User(AbstractUser):
@@ -37,3 +38,10 @@ class User(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR
+
+    def generate_confirmation_code(self):
+        code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        self.confirmation_code = code
+        self.confirmation_code_expiration = timezone.now() + timezone.timedelta(hours=1)
+        self.save()
+        return code
