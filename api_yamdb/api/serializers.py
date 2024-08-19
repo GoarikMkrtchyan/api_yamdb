@@ -5,7 +5,6 @@ from reviews.models import Category, Genre, Title, Review, Comment
 from users.models import User
 
 
-# добавил, так как в моих отзывах некорректно сериализируется автор
 class UserSerializer(serializers.ModelSerializer):
     """Serializer пользователя."""
 
@@ -32,16 +31,24 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     """Serializer произведений."""
+
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = '__all__'
+    
+    def get_rating(self, obj):
+        if obj.rating == 0 and not obj.reviews.exists():
+            return None
+        return obj.rating
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer отзывов."""
+
     author = serializers.SerializerMethodField()
 
     class Meta:
@@ -69,6 +76,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer комментариев."""
+
     author = serializers.SerializerMethodField()
 
     class Meta:

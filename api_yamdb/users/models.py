@@ -16,7 +16,13 @@ class User(AbstractUser):
     bio = models.TextField(blank=True)
     role = models.SlugField(choices=ROLES,
                             default=USER)
-    confirmation_code = models.SlugField(null=True, blank=True)
+    first_name = models.CharField('Имя',
+                                  max_length=150,
+                                  blank=True)
+    last_name = models.CharField('Фамилия',
+                                 max_length=150,
+                                 blank=True)
+    confirmation_code = models.SlugField(null=True, blank=True, unique=True)
 
     class Meta:
         ordering = ['id']

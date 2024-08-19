@@ -1,0 +1,1 @@
+MAX_LENGHT_TEXT = 40

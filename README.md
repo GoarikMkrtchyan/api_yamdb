@@ -1,4 +1,4 @@
-### api_yamdb
+# Проект «API для Yatube»
 api_yamdb
 
 YaMDb — это платформа для сбора и обмена отзывами пользователей о различных произведениях, таких как книги, фильмы и музыка. Проект реализован с использованием Django и Django REST Framework.
@@ -28,6 +28,15 @@ YaMDb — это платформа для сбора и обмена отзыв
 
 - **Импорт данных**: Проект позволяет загружать данные из файлов CSV для начальной загрузки базы данных.
 
+### Стек:
+```
+Python 3.11
+Django 3.2.
+Django Rest Framework 3.12
+Django Rest Framework Simplejwt==5.3.1
+Django filter 23.1
+```
+
 ## Установка
 
 1. Клонируйте репозиторий:
@@ -35,23 +44,42 @@ YaMDb — это платформа для сбора и обмена отзыв
     git clone git@github.com:GoarikMkrtchyan/api_yamdb.git
     ```
 2. Перейдите в директорию проекта:
-    ```sh
+    ```bash
     cd api_yamdb
     ```
 3. Создайте и активируйте виртуальное окружение (рекомендуется):
-    ```sh
+    ```bash
     python -m venv venv
     source venv/bin/activate  # Для Windows используйте `venv\Scripts\activate`
     ```
 4. Установите зависимости:
-    ```sh
+    ```bash
     pip install -r requirements.txt
     ```
 5. Примените миграции:
-    ```sh
+    ```bash
     python manage.py migrate
     ```
 6. Запустите сервер:
-    ```sh
+    ```bash
     python manage.py runserver
     ```
+7. Загрузите файлы csv в БД:
+    ```bash
+    python manage.py load_data_csv
+    ```
+## Документация API:
+Документация API по проекту находится по адресу
+(доступно после запуска проекта):
+
+```
+http://127.0.0.1:8000/redoc/
+
+```
+
+### Авторы:
+1. Мкртчян Гоарик - Разработчик 1(Управление пользователями) 
+2. Чуйко Полина - Разработчик 2 (Произведения/категории/жанр/load_data_csv)
+3. Бачурин Станислав - Разработчик 3(Отзывы/Комменты/рейтинги)
+
+https://github.com/GoarikMkrtchyan/api_yamdb

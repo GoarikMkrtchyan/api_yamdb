@@ -1,7 +1,9 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import User
+
 from .validators import validate_year
+from .constants import MAX_LENGHT_TEXT
 
 
 class Category(models.Model):
@@ -14,7 +16,7 @@ class Category(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return self.name[:MAX_LENGHT_TEXT]
 
 
 class Genre(models.Model):
@@ -27,7 +29,7 @@ class Genre(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name
+        return self.name[:MAX_LENGHT_TEXT]
 
 
 class Title(models.Model):
@@ -41,11 +43,6 @@ class Title(models.Model):
         'Год выпуска',
         validators=(validate_year,)
     )
-    description = models.TextField('Описание')
-    genre = models.ManyToManyField(
-        Genre,
-        through='GenreTitle'
-    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -53,20 +50,32 @@ class Title(models.Model):
         blank=True,
         null=True
     )
+    description = models.TextField(
+        'Описание',
+        null=True,
+        blank=True
+    )
+    genre = models.ManyToManyField(
+        Genre,
+        through='GenreTitle'
+    )
+
     rating = models.IntegerField(default=0)
 
-    # метод для расчёта среднего рейтинга
     def update_rating(self):
         reviews = self.reviews.all()
-        total_score = sum(review.score for review in reviews)
-        self.rating = total_score / reviews.count() if reviews.exists() else 0
+        if reviews.exists():
+            total_score = sum(review.score for review in reviews)
+            self.rating = total_score / reviews.count()
+        else:
+            self.rating = None
         self.save()
 
     class Meta:
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} - {self.year}"
+        return f"{self.name[:MAX_LENGHT_TEXT]} - {self.year}"
 
 
 class GenreTitle(models.Model):
@@ -97,10 +106,10 @@ class GenreTitle(models.Model):
 class Review(models.Model):
     """Model Отзыв."""
 
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE,
                               related_name="reviews")
     text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.IntegerField(validators=(MinValueValidator(1),
                                             MaxValueValidator(10)))
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -112,20 +121,21 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return (self.text)
+        return self.text[:MAX_LENGHT_TEXT]
 
 
 class Comment(models.Model):
     """Model Комментарий."""
+
     review = models.ForeignKey(Review,
                                related_name='comments',
                                on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return (self.text)
+        return self.text[:MAX_LENGHT_TEXT]
 
 
 class ReviewTitle(models.Model):
