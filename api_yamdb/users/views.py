@@ -60,6 +60,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def list(self, request, *args, **kwargs):
+        if not request.user.is_admin:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
+
 
 class SignUpViewSet(APIView):
     """ViewSet для регистрации пользователя."""
