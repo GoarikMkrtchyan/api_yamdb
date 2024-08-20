@@ -49,7 +49,7 @@ class TitleSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer отзывов."""
 
-    author = serializers.SerializerMethodField()
+    author = serializers.CharField(source='author.username', read_only=True)
 
     class Meta:
         model = Review
@@ -68,10 +68,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise ValidationError("Вы уже оставили отзыв на это произведение.")
 
         return data
-
-    def get_author(self, obj):
-        # Возвращаем только имя пользователя
-        return obj.author.username
 
 
 class CommentSerializer(serializers.ModelSerializer):

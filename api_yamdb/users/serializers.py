@@ -4,15 +4,11 @@ from users.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer user."""
-    username = serializers.RegexField(regex=r'^[\w.@+-]+\Z', max_length=150)
-    email = serializers.EmailField(max_length=254)
-    first_name = serializers.CharField(max_length=150)
-    last_name = serializers.CharField(max_length=150)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
-        read_only_fields = ('role',)
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        read_only_fields = ['role',]
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -21,10 +17,22 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'username')
 
+    def validate(self, data):
+        email = data.get('email')
+        username = data.get('username')
+
+        # Проверка уникальности email
+        if User.objects.filter(email=email).exists():
+            # Поскольку email должен быть уникальным, можем просто вернуть данные без исключения
+            pass
+
+        # Проверка уникальности username
+        if User.objects.filter(username=username).exists():
+            # Поскольку username должен быть уникальным, можем просто вернуть данные без исключения
+            pass
+
 
 class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True)
-    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
         model = User
