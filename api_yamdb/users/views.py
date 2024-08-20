@@ -1,27 +1,45 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer, SignUpSerializer, TokenSerializer
 from .models import User
-from .permissions import IsAdminOrSelf
+from .permissions import IsAdmin
 from .utils import send_confirmation_code
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminOrSelf]
+    permission_classes = [IsAdmin]
     http_method_names = ['get', 'post', 'patch', 'delete']
-    search_fields = ('username',)
+    lookup_field = 'username'
+    filter_backends = (SearchFilter, )
+    search_fields = ('username', )
 
     def get_object(self):
         if self.action == 'me':
             return self.request.user
         return super().get_object()
+
+    @action(detail=False, methods=['get', 'patch'],
+            permission_classes=[IsAuthenticated])
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = self.get_serializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == 'PATCH':
+            serializer = self.get_serializer(
+                request.user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role, partial=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SignUpViewSet(APIView):
@@ -40,7 +58,8 @@ class SignUpViewSet(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            user, created = User.objects.get_or_create(username=username, email=email)
+            user, created = User.objects.get_or_create(
+                username=username, email=email)
 
             if created:
                 # Если пользователь был создан, отправляем код подтверждения
@@ -70,25 +89,11 @@ class TokenViewSet(APIView):
             user = get_object_or_404(User, username=username)
 
             if user.confirmation_code != confirmation_code or timezone.now() > user.confirmation_code_expiry:
-                return Response({"error": "Invalid or expired confirmation code"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid or expired confirmation code"},
+                    status=status.HTTP_400_BAD_REQUEST)
 
             token = str(RefreshToken.for_user(user))
             return Response({"token": token})
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CurrentUserViewSet(APIView):
-    permission_classes = [IsAdminOrSelf]
-    http_method_names = ['get', 'post', 'patch']
-
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

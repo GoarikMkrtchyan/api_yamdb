@@ -39,7 +39,7 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = '__all__'
-    
+
     def get_rating(self, obj):
         if obj.rating == 0 and not obj.reviews.exists():
             return None
