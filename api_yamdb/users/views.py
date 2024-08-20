@@ -27,6 +27,8 @@ class UserViewSet(viewsets.ModelViewSet):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
+        if request.user != self.get_object() and not request.user.is_admin:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         partial = kwargs.pop('partial', True)
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)

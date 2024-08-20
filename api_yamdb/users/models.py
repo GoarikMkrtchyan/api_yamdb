@@ -11,9 +11,9 @@ class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
     ROLES = [
-        (USER, 'user'),
-        (ADMIN, 'admin'),
-        (MODERATOR, 'moderator')
+        (USER, 'User'),
+        (ADMIN, 'Admin'),
+        (MODERATOR, 'Moderator')
     ]
     username = models.SlugField(max_length=150, unique=True)
     email = models.EmailField(max_length=254, unique=True)
