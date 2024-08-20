@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db import models
+from django.utils import timezone
+import random
+import string
 
 
 class User(AbstractUser):
@@ -7,9 +11,9 @@ class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
     ROLES = [
-        (USER, 'user'),
-        (ADMIN, 'admin'),
-        (MODERATOR, 'moderator')
+        (USER, 'User'),
+        (ADMIN, 'Admin'),
+        (MODERATOR, 'Moderator')
     ]
     username = models.SlugField(max_length=150, unique=True)
     email = models.EmailField(max_length=254, unique=True)
@@ -39,6 +43,9 @@ class User(AbstractUser):
     def is_moderator(self):
         return self.role == self.MODERATOR
 
-    # # Добавил, чтобы в сериализаторе поля автор был не айди, а имя
-    # def __str__(self):
-    #     return (self.username)
+    def generate_confirmation_code(self):
+        code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        self.confirmation_code = code
+        self.confirmation_code_expiration = timezone.now() + timezone.timedelta(hours=1)
+        self.save()
+        return code
