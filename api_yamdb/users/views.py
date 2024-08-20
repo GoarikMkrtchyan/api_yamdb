@@ -16,6 +16,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAdminOrSelf]
     http_method_names = ['get', 'post', 'patch', 'delete']
+    search_fields = ('username',)
 
     def get_object(self):
         if self.action == 'me':
