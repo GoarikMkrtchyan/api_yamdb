@@ -6,16 +6,11 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer, SignUpSerializer, TokenSerializer
 from .models import User
+from rest_framework.exceptions import MethodNotAllowed
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from .permissions import IsAdminOrSelf, IsAdmin, IsAdminOrReadOnly
 from .utils import send_confirmation_code
-from rest_framework.permissions import BasePermission
-from .permissions import IsAdminOrSelf, IsAdminOrReadOnly
-
-
-class IsAdmin(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_admin
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -27,13 +22,40 @@ class UserViewSet(viewsets.ModelViewSet):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            raise MethodNotAllowed('PUT')
+
+        if request.method == 'PATCH':
+            if request.user != self.get_object() and not request.user.is_admin:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+            partial = kwargs.pop('partial', True)
+            serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_admin:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
         if request.user != self.get_object() and not request.user.is_admin:
             return Response(status=status.HTTP_403_FORBIDDEN)
-        partial = kwargs.pop('partial', True)
-        serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if request.user.is_moderator or request.user.is_user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
 
 class SignUpViewSet(APIView):
