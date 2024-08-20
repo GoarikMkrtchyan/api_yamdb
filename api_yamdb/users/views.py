@@ -53,9 +53,12 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if request.user.is_moderator or request.user.is_user:
+        user = self.get_object()
+        if request.user.is_superuser:
+            return super().destroy(request, *args, **kwargs)
+        elif request.user.is_moderator or request.user.is_user:
             return Response(status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(request, *args, **kwargs)
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class SignUpViewSet(APIView):
@@ -67,11 +70,21 @@ class SignUpViewSet(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             username = serializer.validated_data['username']
+
+            if username.lower() == 'me':
+                return Response(
+                    {'username': 'This username is reserved.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             user, created = User.objects.get_or_create(username=username, email=email)
             if created:
                 send_confirmation_code(user)
                 return Response({'email': email, 'username': username}, status=status.HTTP_200_OK)
-            return Response({'email': email, 'username': username}, status=status.HTTP_201_CREATED)
+            else:
+                send_confirmation_code(user)
+                return Response({'email': email, 'username': username,
+                                 'info': 'Confirmation code resent.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -79,6 +92,13 @@ class TokenViewSet(APIView):
     """ViewSet для получения токена."""
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
+
+        if not request.data:
+            return Response(
+                {"error": "No data provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if serializer.is_valid():
             serializer.is_valid(raise_exception=True)
 
