@@ -1,17 +1,17 @@
 from rest_framework import serializers
+
 from users.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer user."""
-    username = serializers.RegexField(regex=r'^[\w.@+-]+\Z', max_length=150)
-    email = serializers.EmailField(max_length=254)
-    first_name = serializers.CharField(max_length=150)
-    last_name = serializers.CharField(max_length=150)
+    role = serializers.CharField(required=False)
+    bio = serializers.CharField(required=False)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = ('username', 'email', 'first_name',
+                  'last_name', 'bio', 'role')
         read_only_fields = ('role',)
 
 

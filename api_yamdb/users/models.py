@@ -1,9 +1,9 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.db import models
-from django.utils import timezone
 import random
 import string
+
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -44,8 +44,10 @@ class User(AbstractUser):
         return self.role == self.MODERATOR
 
     def generate_confirmation_code(self):
-        code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        code = ''.join(random.choices(
+            string.ascii_letters + string.digits, k=6))
         self.confirmation_code = code
-        self.confirmation_code_expiration = timezone.now() + timezone.timedelta(hours=1)
+        self.confirmation_code_expiration = (
+            timezone.now() + timezone.timedelta(hours=1))
         self.save()
         return code

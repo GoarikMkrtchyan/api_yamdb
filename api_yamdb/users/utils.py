@@ -1,9 +1,10 @@
-from django.core.exceptions import ValidationError
 import random
 import string
 from datetime import timedelta
-from django.utils import timezone
+
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.utils import timezone
 
 
 def send_confirmation_code(user):
