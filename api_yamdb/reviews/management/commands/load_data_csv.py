@@ -95,6 +95,7 @@ def genre_title_create(row):
         genre=genre,
     )
 
+
 TABLES = {
     'category.csv': category_create,
     'genre.csv': genre_create,
