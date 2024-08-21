@@ -65,11 +65,12 @@ class SignUpViewSet(APIView):
                 # Если пользователь был создан, отправляем код подтверждения
                 send_confirmation_code(user)
                 response_data = {'email': email, 'username': username}
-                status_code = status.HTTP_200_OK  # 201 Created для нового пользователя
+                status_code = status.HTTP_200_OK
             else:
                 # Если пользователь уже существует, возвращаем статус 200
-                response_data = {'email': email, 'username': username, 'info': 'Confirmation code resent.'}
-                status_code = status.HTTP_200_OK  # 200 OK для существующего пользователя
+                response_data = {'email': email, 'username': username,
+                                 'info': 'Confirmation code resent.'}
+                status_code = status.HTTP_200_OK
 
             return Response(response_data, status=status_code)
 
@@ -88,7 +89,9 @@ class TokenViewSet(APIView):
 
             user = get_object_or_404(User, username=username)
 
-            if user.confirmation_code != confirmation_code or timezone.now() > user.confirmation_code_expiry:
+            if user.confirmation_code != confirmation_code or (
+                timezone.now() > user.confirmation_code_expiry
+            ):
                 return Response(
                     {"error": "Invalid or expired confirmation code"},
                     status=status.HTTP_400_BAD_REQUEST)
