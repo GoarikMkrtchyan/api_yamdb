@@ -14,7 +14,7 @@ def send_confirmation_code(user):
     send_mail(
         'Your confirmation code',
         f'Your confirmation code is {confirmation_code}',
-        DEFAULT_FROM_EMAIL
+        DEFAULT_FROM_EMAIL,
         [user.email],
         fail_silently=False,
     )
