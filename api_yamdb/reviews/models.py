@@ -1,8 +1,9 @@
 from django.db import models
+
 from users.models import User
 
+from .constants import MAX_LENGHT_NAME, MAX_LENGHT_SLUG, STRING_LENGHT_TEXT
 from .validators import validate_year
-from .constants import STRING_LENGHT_TEXT, MAX_LENGHT_SLUG, MAX_LENGHT_NAME
 
 
 class Category(models.Model):

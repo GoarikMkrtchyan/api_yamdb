@@ -1,27 +1,32 @@
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from django.utils import timezone
-
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer, SignUpSerializer, TokenSerializer
+
 from .models import User
 from .permissions import IsAdmin
+from .serializers import (AdminUserSerializer, SignUpSerializer,
+                          TokenSerializer, UserSerializer)
 from .utils import send_confirmation_code
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
     permission_classes = [IsAdmin]
     http_method_names = ['get', 'post', 'patch', 'delete']
     lookup_field = 'username'
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
+
+    def get_serializer_class(self):
+        if self.request.user.is_staff:
+            return AdminUserSerializer
+        return UserSerializer
 
     def get_object(self):
         if self.action == 'me':
@@ -52,7 +57,8 @@ class SignUpViewSet(APIView):
             username = serializer.validated_data['username']
 
             # Проверка зарезервированного имени теперь в сериализаторе
-            user, created = User.objects.get_or_create(username=username, email=email)
+            user, created = User.objects.get_or_create(
+                username=username, email=email)
             if created:
                 send_confirmation_code(user)
                 response_data = {'email': email, 'username': username}

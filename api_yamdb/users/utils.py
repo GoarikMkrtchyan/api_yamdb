@@ -1,8 +1,11 @@
 import random
 import string
+
 from django.core.mail import send_mail
-from .constants import CONF_CODE_LENGTH
+
 from api_yamdb.settings import DEFAULT_FROM_EMAIL
+
+from .constants import CONF_CODE_LENGTH
 
 
 def send_confirmation_code(user):
