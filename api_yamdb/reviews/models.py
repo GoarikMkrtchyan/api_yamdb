@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import User
 
 from .validators import validate_year
@@ -121,8 +120,7 @@ class Review(models.Model):
                               related_name="reviews")
     text = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    score = models.IntegerField(validators=(MinValueValidator(1),
-                                            MaxValueValidator(10)))
+    score = models.PositiveSmallIntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -155,28 +153,3 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text[:STRING_LENGHT_TEXT]
-
-
-class ReviewTitle(models.Model):
-    """Model произведение-отзыв."""
-
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name='review_titles'
-    )
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE,
-        related_name='review_titles'
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['title_id', 'review_id'],
-                name='unique_review_title')
-        ]
-
-    def __str__(self):
-        return f'{self.title[:STRING_LENGHT_TEXT]} - {self.review}'
