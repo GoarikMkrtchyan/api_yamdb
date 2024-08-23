@@ -2,15 +2,17 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 
 from .filters import TitleFilter
 from .mixin import CategoryGenreMixinViewSet
-from .permissions import IsAdminOrReadOnly, IsStuffOrAuthor
+from .permissions import IsAdminOrReadOnly, IsStuffOrReadOnly
 from .serializers import (CategorySerializer,
                           CommentSerializer,
                           GenreSerializer,
                           ReviewSerializer,
-                          TitleSerializer)
+                          TitleReadSerializer,
+                          TitleCreateUpdateSerializer)
 from reviews.models import (Category,
                             Genre,
                             Title,
@@ -33,84 +35,58 @@ class GenreViewSet(CategoryGenreMixinViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """ViewSet произведений."""
-
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).order_by('name')
+    http_method_names = ['get', 'post', 'patch', 'delete']
     pagination_class = PageNumberPagination
     permission_classes = (IsAdminOrReadOnly,)
-    http_method_names = ['get', 'post', 'patch', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
-    def perform_create(self, serializer):
-        self.save_title(serializer)
-
-    def perform_update(self, serializer):
-        self.save_title(serializer)
-
-    def save_title(self, serializer):
-        category = get_object_or_404(
-            Category, slug=self.request.data.get('category')
-        )
-        genre = Genre.objects.filter(
-            slug__in=self.request.data.getlist('genre')
-        )
-        serializer.save(category=category, genre=genre)
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleCreateUpdateSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """ViewSet отзывов."""
 
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsStuffOrAuthor,)
+    permission_classes = (IsStuffOrReadOnly,)
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def get_queryset(self):
-        # Получаем `title_id` из параметров запроса (URL)
+    # Метод проверки тайтла. Возвращает тайтл или 404
+    def check_title(self):
         title_id = self.kwargs.get('title_id')
-        if title_id is not None:
-            return Review.objects.filter(title_id=title_id)
-        return Review.objects.none()
+        return get_object_or_404(Title, id=title_id)
+
+    def get_queryset(self):
+        title_id = self.check_title().pk
+        return Review.objects.filter(title_id=title_id)
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
-        review = serializer.save(title=title, author=self.request.user)
-        review.title.update_rating()
-
-    def perform_update(self, serializer):
-        review = serializer.save()
-        review.title.update_rating()
-
-    def perform_destroy(self, instance):
-        title = instance.title
-        super().perform_destroy(instance)
-        title.update_rating()
+        title = self.check_title()
+        serializer.save(title=title, author=self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     """ViewSet комментариев."""
 
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsStuffOrAuthor,)
+    permission_classes = (IsStuffOrReadOnly,)
     http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def get_queryset(self):
-        # Получаем `review_id` из параметров запроса (URL)
+    def check_review(self):
         review_id = self.kwargs.get('review_id')
-        if review_id is not None:
-            return Comment.objects.filter(review_id=review_id)
-        return Comment.objects.none()
+        return get_object_or_404(Review, id=review_id)
+
+    def get_queryset(self):
+        review_id = self.check_review().pk
+        return Comment.objects.filter(review_id=review_id)
 
     def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
+        review = self.check_review()
         serializer.save(review=review, author=self.request.user)
-
-    def perform_update(self, serializer):
-        serializer.save()
