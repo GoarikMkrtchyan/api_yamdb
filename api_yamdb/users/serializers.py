@@ -13,6 +13,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
 
+    def validate(self, data):
+        email = data.get('email')
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                'User with this email or username already exists.')
+
+        return data
+
     def validate_role(self, value):
         valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
         if value not in valid_roles:
@@ -34,6 +43,10 @@ class SignUpSerializer(serializers.ModelSerializer):
     def validate(self, data):
         email = data.get('email')
         username = data.get('username')
+
+        if User.objects.filter(username=username).exists(
+        ) and User.objects.filter(email=email).exists():
+            return data
 
         if User.objects.filter(username=username).exists(
         ) or User.objects.filter(email=email).exists():
