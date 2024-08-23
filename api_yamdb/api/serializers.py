@@ -1,6 +1,6 @@
 from django.forms import ValidationError
 from rest_framework import serializers
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 from reviews.models import Category, Genre, Title, Review, Comment
 from users.models import User
 
@@ -18,7 +18,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        exclude = ('id',)
+        fields = ('name', 'slug',)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -26,30 +26,43 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        exclude = ('id',)
+        fields = ('name', 'slug',)
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    """Serializer произведений."""
-
+class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'category',
+                  'description', 'genre', 'rating',)
 
-    def get_rating(self, obj):
-        if obj.rating == 0 and not obj.reviews.exists():
-            return None
-        return obj.rating
+
+class TitleCreateUpdateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    genre = serializers.SlugRelatedField(
+        many=True,
+        slug_field='slug',
+        queryset=Genre.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year', 'category',
+                  'description', 'genre',)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer отзывов."""
 
     author = serializers.CharField(source='author.username', read_only=True)
+    score = serializers.IntegerField(validators=(MinValueValidator(1),
+                                                 MaxValueValidator(10)))
 
     class Meta:
         model = Review
@@ -73,13 +86,10 @@ class ReviewSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer комментариев."""
 
-    author = serializers.SerializerMethodField()
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only='True')
 
     class Meta:
         model = Comment
-        fields = ['id', 'text', 'author', 'pub_date', 'review']
-        read_only_fields = ['author', 'pub_date', 'review']
-
-    def get_author(self, obj):
-        # Возвращаем только имя пользователя
-        return obj.author.username
+        fields = ['id', 'text', 'author', 'pub_date']
+        read_only_fields = ['author', 'pub_date']

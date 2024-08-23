@@ -6,7 +6,7 @@ from .models import User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = (
-        'pk', 'username', 'confirmation_code', 'email', 'role',
+        'pk', 'username', 'email', 'role',
         'is_superuser', 'bio', 'first_name', 'last_name',
     )
     list_editable = ('role',)

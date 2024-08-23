@@ -1,12 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from django.utils import timezone
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer, SignUpSerializer, TokenSerializer
 from .models import User
@@ -20,8 +20,8 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
     http_method_names = ['get', 'post', 'patch', 'delete']
     lookup_field = 'username'
-    filter_backends = (SearchFilter, )
-    search_fields = ('username', )
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
 
     def get_object(self):
         if self.action == 'me':
@@ -35,8 +35,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         elif request.method == 'PATCH':
-            serializer = self.get_serializer(
-                request.user, data=request.data, partial=True)
+            serializer = self.get_serializer(request.user,
+                                             data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save(role=request.user.role, partial=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -51,23 +51,14 @@ class SignUpViewSet(APIView):
             email = serializer.validated_data['email']
             username = serializer.validated_data['username']
 
-            # Проверка зарезервированного имени
-            if username.lower() == 'me':
-                return Response(
-                    {'username': 'This username is reserved.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user, created = User.objects.get_or_create(
-                username=username, email=email)
-
+            # Проверка зарезервированного имени теперь в сериализаторе
+            user, created = User.objects.get_or_create(username=username, email=email)
             if created:
-                # Если пользователь был создан, отправляем код подтверждения
                 send_confirmation_code(user)
                 response_data = {'email': email, 'username': username}
                 status_code = status.HTTP_200_OK
             else:
-                # Если пользователь уже существует, возвращаем статус 200
+                send_confirmation_code(user)  # Перегенерируем код
                 response_data = {'email': email, 'username': username,
                                  'info': 'Confirmation code resent.'}
                 status_code = status.HTTP_200_OK
@@ -82,21 +73,23 @@ class TokenViewSet(APIView):
 
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
-
         if serializer.is_valid():
             username = serializer.validated_data['username']
             confirmation_code = serializer.validated_data['confirmation_code']
 
             user = get_object_or_404(User, username=username)
 
-            if user.confirmation_code != confirmation_code or (
-                timezone.now() > user.confirmation_code_expiry
-            ):
+            if user.confirmation_code != confirmation_code or timezone.now(
+            ) > user.confirmation_code_expiration:
+                # Перегенерируем код
+                user.generate_confirmation_code()
                 return Response(
-                    {"error": "Invalid or expired confirmation code"},
-                    status=status.HTTP_400_BAD_REQUEST)
+                    {'error': 'Invalid or expired'
+                     'confirmation code. Please try again.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             token = str(RefreshToken.for_user(user))
-            return Response({"token": token})
+            return Response({'token': token})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
