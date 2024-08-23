@@ -3,33 +3,51 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import User
 
 from .validators import validate_year
-from .constants import MAX_LENGHT_TEXT
+from .constants import STRING_LENGHT_TEXT, MAX_LENGHT_SLUG, MAX_LENGHT_NAME
 
 
 class Category(models.Model):
     """Model категории."""
 
-    name = models.CharField('Наименование', max_length=256)
-    slug = models.SlugField('Slug категории', max_length=50, unique=True)
+    name = models.CharField(
+        'Наименование',
+        max_length=MAX_LENGHT_NAME
+    )
+    slug = models.SlugField(
+        'Slug категории',
+        max_length=MAX_LENGHT_SLUG,
+        unique=True
+    )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.name[:MAX_LENGHT_TEXT]
+        return self.name[:STRING_LENGHT_TEXT]
 
 
 class Genre(models.Model):
     """Model жанры."""
 
-    name = models.CharField('Наименование', max_length=256)
-    slug = models.SlugField('Slug жанра', max_length=50, unique=True)
+    name = models.CharField(
+        'Наименование',
+        max_length=MAX_LENGHT_NAME
+    )
+    slug = models.SlugField(
+        'Slug жанра',
+        max_length=MAX_LENGHT_SLUG,
+        unique=True
+    )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
-        return self.name[:MAX_LENGHT_TEXT]
+        return self.name[:STRING_LENGHT_TEXT]
 
 
 class Title(models.Model):
@@ -37,9 +55,9 @@ class Title(models.Model):
 
     name = models.CharField(
         'Наименование',
-        max_length=256
+        max_length=MAX_LENGHT_NAME
     )
-    year = models.IntegerField(
+    year = models.SmallIntegerField(
         'Год выпуска',
         validators=(validate_year,)
     )
@@ -60,22 +78,13 @@ class Title(models.Model):
         through='GenreTitle'
     )
 
-    rating = models.IntegerField(default=0)
-
-    def update_rating(self):
-        reviews = self.reviews.all()
-        if reviews.exists():
-            total_score = sum(review.score for review in reviews)
-            self.rating = total_score / reviews.count()
-        else:
-            self.rating = None
-        self.save()
-
     class Meta:
         ordering = ['name']
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
-        return f"{self.name[:MAX_LENGHT_TEXT]} - {self.year}"
+        return f'{self.name[:STRING_LENGHT_TEXT]} - {self.year}'
 
 
 class GenreTitle(models.Model):
@@ -98,9 +107,11 @@ class GenreTitle(models.Model):
                 fields=['title_id', 'genre_id'],
                 name='unique_genre_title')
         ]
+        verbose_name = 'Жанр-Произведение'
+        verbose_name_plural = 'Жанры-Произведения'
 
     def __str__(self):
-        return f"{self.title} - {self.genre}"
+        return f'{self.title} - {self.genre}'
 
 
 class Review(models.Model):
@@ -115,13 +126,16 @@ class Review(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        ordering = ('-pub_date',)
         constraints = [
             models.UniqueConstraint(fields=['title', 'author'],
                                     name='unique_review')
         ]
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
 
     def __str__(self):
-        return self.text[:MAX_LENGHT_TEXT]
+        return self.text[:STRING_LENGHT_TEXT]
 
 
 class Comment(models.Model):
@@ -134,8 +148,13 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     pub_date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
     def __str__(self):
-        return self.text[:MAX_LENGHT_TEXT]
+        return self.text[:STRING_LENGHT_TEXT]
 
 
 class ReviewTitle(models.Model):
@@ -160,4 +179,4 @@ class ReviewTitle(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.review}"
+        return f'{self.title[:STRING_LENGHT_TEXT]} - {self.review}'
