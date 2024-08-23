@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from users.models import User
 from django.utils import timezone
@@ -54,10 +55,10 @@ class TokenSerializer(serializers.ModelSerializer):
     def validate(self, data):
         username = data.get('username')
         conf_code = data.get('confirmation_code')
-        user = User.objects.filter(username=username).first()
+        user = get_object_or_404(User, username=username)
 
-        if not user:
-            raise serializers.ValidationError({'username': 'User not found.'})
+        # if not user:
+        #     raise serializers.ValidationError({'username': 'User not found.'})
 
         if user.confirmation_code != conf_code or timezone.now(
         ) > user.confirmation_code_expiration:
