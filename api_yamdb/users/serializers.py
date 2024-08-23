@@ -1,7 +1,10 @@
-from rest_framework import serializers
-from users.models import User
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .constants import MAX_LENGTH, EMAIL_LENGTH
+from rest_framework import serializers
+
+from users.models import User
+
+from .constants import EMAIL_LENGTH, MAX_LENGTH
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,7 +13,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        fields = ['username', 'email', 'first_name',
+                  'last_name', 'bio', 'role']
+
+    def validate(self, data):
+        email = data.get('email')
+
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                'User with this email or username already exists.')
+
+        return data
 
     def validate_role(self, value):
         valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
@@ -20,6 +33,14 @@ class UserSerializer(serializers.ModelSerializer):
                 f"Допустимые роли: {', '.join(valid_roles)}."
             )
         return value
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Serializer for admin actions."""
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name',
+                  'bio', 'role', 'is_active']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -33,6 +54,10 @@ class SignUpSerializer(serializers.ModelSerializer):
     def validate(self, data):
         email = data.get('email')
         username = data.get('username')
+
+        if User.objects.filter(username=username).exists(
+        ) and User.objects.filter(email=email).exists():
+            return data
 
         if User.objects.filter(username=username).exists(
         ) or User.objects.filter(email=email).exists():
@@ -54,10 +79,7 @@ class TokenSerializer(serializers.ModelSerializer):
     def validate(self, data):
         username = data.get('username')
         conf_code = data.get('confirmation_code')
-        user = User.objects.filter(username=username).first()
-
-        if not user:
-            raise serializers.ValidationError({'username': 'User not found.'})
+        user = get_object_or_404(User, username=username)
 
         if user.confirmation_code != conf_code or timezone.now(
         ) > user.confirmation_code_expiration:
