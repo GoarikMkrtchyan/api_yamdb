@@ -1,6 +1,5 @@
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-from users.models import User
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -11,7 +10,7 @@ from .constants import EMAIL_LENGTH, MAX_LENGTH
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer user."""
-    email = serializers.EmailField(max_length=EMAIL_LENGTH)
+    email = serializers.EmailField(max_length=EMAIL_LENGTH, required=True)
 
     class Meta:
         model = User
@@ -44,10 +43,20 @@ class AdminUserSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'first_name', 'last_name',
                   'bio', 'role', 'is_active']
 
+    def validate_role(self, value):
+        valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
+        if value not in valid_roles:
+            raise serializers.ValidationError(
+                f"Недопустимая роль: {value}."
+                "Допустимые роли: {', '.join(valid_roles)}."
+            )
+        return value
+
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=EMAIL_LENGTH, required=True)
-    username = serializers.SlugField(max_length=MAX_LENGTH, required=True)
+    username = serializers.SlugField(
+        max_length=MAX_LENGTH, required=True)
 
     class Meta:
         model = User
@@ -57,18 +66,29 @@ class SignUpSerializer(serializers.ModelSerializer):
         email = data.get('email')
         username = data.get('username')
 
-        if User.objects.filter(username=username).exists(
-        ) and User.objects.filter(email=email).exists():
+        user = User.objects.filter(email=email, username=username).first()
+
+        if user:
+            # Если пользователь уже существует, вернем его данные
+            # (например, отправим новый код подтверждения)
+            user.generate_confirmation_code()
+            user.save()
             return data
 
-        if User.objects.filter(username=username).exists(
-        ) or User.objects.filter(email=email).exists():
+        if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
-                'User with this email or username already exists.')
+                {'email': 'Пользователь с таким email уже существует.'}
+            )
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {'username': 'Пользователь с таким username уже существует.'}
+            )
 
         if username.lower() == 'me':
             raise serializers.ValidationError(
-                {'username': 'This username is reserved.'})
+                {'username': 'Это имя пользователя зарезервировано.'}
+            )
 
         return data
 
