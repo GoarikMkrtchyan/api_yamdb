@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Category, Genre, Title, GenreTitle, Review, Comment
+
+from .models import Category, Comment, Genre, GenreTitle, Review, Title
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -7,11 +9,13 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
+
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
+
 
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
@@ -21,16 +25,19 @@ class TitleAdmin(admin.ModelAdmin):
     raw_id_fields = ('category',)
     autocomplete_fields = ('genre',)
 
+
 @admin.register(GenreTitle)
 class GenreTitleAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'genre')
     search_fields = ('title__name', 'genre__name')
+
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'author', 'score', 'pub_date')
     search_fields = ('title__name', 'author__username')
     list_filter = ('score', 'pub_date')
+
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

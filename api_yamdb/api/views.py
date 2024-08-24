@@ -1,23 +1,17 @@
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
-from django.db.models import Avg
+
+from reviews.models import Category, Comment, Genre, Review, Title
 
 from .filters import TitleFilter
 from .mixin import CategoryGenreMixinViewSet
 from .permissions import IsAdminOrReadOnly, IsStuffOrReadOnly
-from .serializers import (CategorySerializer,
-                          CommentSerializer,
-                          GenreSerializer,
-                          ReviewSerializer,
-                          TitleReadSerializer,
-                          TitleCreateUpdateSerializer)
-from reviews.models import (Category,
-                            Genre,
-                            Title,
-                            Review,
-                            Comment)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleCreateUpdateSerializer, TitleReadSerializer)
 
 
 class CategoryViewSet(CategoryGenreMixinViewSet):

@@ -1,9 +1,12 @@
+import random
+import string
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-import random
-import string
-from .constants import MAX_LENGTH, EMAIL_LENGTH, CONF_EXPIRATION_HOURS, CONF_CODE_LENGTH
+
+from .constants import (CONF_CODE_LENGTH, CONF_EXPIRATION_HOURS,
+                        EMAIL_LENGTH, MAX_LENGTH)
 
 
 class User(AbstractUser):
