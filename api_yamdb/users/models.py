@@ -2,12 +2,12 @@ import random
 import string
 
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 
 from .constants import (CONF_CODE_LENGTH, CONF_EXPIRATION_HOURS, EMAIL_LENGTH,
                         MAX_LENGTH)
+from .validators import validate_username, validate_username_format
 
 
 class User(AbstractUser):
@@ -21,10 +21,8 @@ class User(AbstractUser):
     ]
     username = models.SlugField(
         max_length=MAX_LENGTH, unique=True,
-        validators=[RegexValidator(
-            regex=r'^[\w.@+-]+\Z',
-            message=('Username can only contain letters,'
-                     'numbers, hyphens, and underscores.'),)])
+        validators=[validate_username, validate_username_format]
+    )
     email = models.EmailField(max_length=EMAIL_LENGTH, )
     bio = models.TextField(blank=True)
     role = models.SlugField(choices=ROLES,
