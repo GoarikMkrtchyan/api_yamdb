@@ -19,9 +19,9 @@ class GenreAdmin(admin.ModelAdmin):
 
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'year', 'category', 'rating')
+    list_display = ('id', 'name', 'year', 'category', 'description')
     search_fields = ('name',)
-    list_filter = ('year', 'category', 'genre')
+    list_filter = ('year', 'category')
     raw_id_fields = ('category',)
     autocomplete_fields = ('genre',)
 
@@ -29,17 +29,17 @@ class TitleAdmin(admin.ModelAdmin):
 @admin.register(GenreTitle)
 class GenreTitleAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'genre')
-    search_fields = ('title__name', 'genre__name')
+    search_fields = ('title', 'genre')
 
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'author', 'score', 'pub_date')
-    search_fields = ('title__name', 'author__username')
+    search_fields = ('title', 'author')
     list_filter = ('score', 'pub_date')
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'review', 'author', 'pub_date')
-    search_fields = ('review__text', 'author__username')
+    list_display = ('id', 'review', 'text', 'author', 'pub_date')
+    search_fields = ('review', 'author')

@@ -104,17 +104,20 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class TokenSerializer(serializers.ModelSerializer):
+    username = serializers.SlugField(required=True)
+    confirmation_code = serializers.CharField(required=True)
+
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
 
-    def validate(self, data):
-        username = data.get('username')
-        conf_code = data.get('confirmation_code')
-        user = get_object_or_404(User, username=username)
-        if user.confirmation_code != conf_code or timezone.now(
-        ) > user.confirmation_code_expiration:
-            raise serializers.ValidationError(
-                {'confirmation_code': 'Invalid or expired confirmation code.'})
+    # def validate(self, data):
+    #     username = data.get('username')
+    #     conf_code = data.get('confirmation_code')
+    #     user = get_object_or_404(User, username=username)
+    #     if user.confirmation_code != conf_code or timezone.now(
+    #     ) > user.confirmation_code_expiration:
+    #         raise serializers.ValidationError(
+    #             {'confirmation_code': 'Invalid or expired confirmation code.'})
 
-        return data
+    #     return data
