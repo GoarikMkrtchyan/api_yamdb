@@ -1,9 +1,8 @@
 from rest_framework import serializers
-
 from users.models import User
-
 from .constants import EMAIL_LENGTH, MAX_LENGTH
 from .utils import send_confirmation_code
+import re
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,9 +51,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=EMAIL_LENGTH, required=True)
-    username = serializers.SlugField(
-        max_length=MAX_LENGTH, required=True)
+    email = serializers.EmailField(max_length=EMAIL_LENGTH,
+                                   required=True)
+
+    username = serializers.CharField(max_length=MAX_LENGTH,
+                                     required=True,)
 
     class Meta:
         model = User
@@ -73,10 +74,25 @@ class SignUpSerializer(serializers.ModelSerializer):
             user.save()
             return data
 
+        if (User.objects.filter(email=email).exists()
+           and User.objects.filter(username=username).exists()):
+            raise serializers.ValidationError(
+                {'username': 'Пользователь с таким username уже существует.',
+                 'email': 'Пользователь с таким email уже существует.'}
+            )
+
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 {'email': 'Пользователь с таким email уже существует.'}
             )
+
+        if ((not re.match(r'^[w.@+-]+Z', username))
+           and (username not in ['admin-user',
+                                 'regular-user',
+                                 'superuser',
+                                 'moderator'])):
+            raise serializers.ValidationError(
+                {'username': 'Недопустимое имя пользователя'})
 
         if User.objects.filter(username=username).exists():
             raise serializers.ValidationError(
@@ -107,4 +123,4 @@ class TokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'confirmation_code')
+        fields = ['username', 'confirmation_code']
