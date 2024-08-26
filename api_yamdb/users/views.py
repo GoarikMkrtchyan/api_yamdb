@@ -6,7 +6,8 @@ from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+# from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import User
 from .permissions import IsAdmin
@@ -80,13 +81,12 @@ class TokenViewSet(APIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         if serializer.is_valid():
-            username = serializer.validated_data['username']
-            confirmation_code = serializer.validated_data['confirmation_code']
+            username = serializer.data['username']
+            confirmation_code = serializer.data['confirmation_code']
 
             user = get_object_or_404(User, username=username)
 
-            if user.confirmation_code != confirmation_code or timezone.now(
-            ) > user.confirmation_code_expiration:
+            if user.confirmation_code != confirmation_code:
                 # Перегенерируем код
                 user.generate_confirmation_code()
                 return Response(
@@ -95,7 +95,8 @@ class TokenViewSet(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            token = str(RefreshToken.for_user(user))
-            return Response({'token': token})
+            # token = str(RefreshToken.for_user(user))
+            token = str(AccessToken.for_user(user))
+            return Response({'token': token}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
