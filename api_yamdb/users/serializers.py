@@ -1,5 +1,3 @@
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import serializers
 
 from users.models import User
@@ -110,14 +108,3 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
-
-    # def validate(self, data):
-    #     username = data.get('username')
-    #     conf_code = data.get('confirmation_code')
-    #     user = get_object_or_404(User, username=username)
-    #     if user.confirmation_code != conf_code or timezone.now(
-    #     ) > user.confirmation_code_expiration:
-    #         raise serializers.ValidationError(
-    #             {'confirmation_code': 'Invalid or expired confirmation code.'})
-
-    #     return data
