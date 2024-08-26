@@ -5,6 +5,7 @@ from rest_framework import serializers
 from users.models import User
 
 from .constants import EMAIL_LENGTH, MAX_LENGTH
+from .utils import send_confirmation_code
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -90,6 +91,16 @@ class SignUpSerializer(serializers.ModelSerializer):
             )
 
         return data
+
+    def create(self, validated_data):
+        user, created = User.objects.get_or_create(
+            username=validated_data['username'],
+            email=validated_data['email']
+        )
+        # Генерация и отправка кода подтверждения
+        user.generate_confirmation_code()
+        send_confirmation_code(user)
+        return user
 
 
 class TokenSerializer(serializers.ModelSerializer):

@@ -53,23 +53,12 @@ class SignUpViewSet(APIView):
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
-            username = serializer.validated_data['username']
-
-            # Проверка зарезервированного имени теперь в сериализаторе
-            user, created = User.objects.get_or_create(
-                username=username, email=email)
-            if created:
-                send_confirmation_code(user)
-                response_data = {'email': email, 'username': username}
-                status_code = status.HTTP_200_OK
-            else:
-                send_confirmation_code(user)  # Перегенерируем код
-                response_data = {'email': email, 'username': username,
-                                 'info': 'Confirmation code resent.'}
-                status_code = status.HTTP_200_OK
-
-            return Response(response_data, status=status_code)
+            user = serializer.save()
+            response_data = {
+                'email': user.email,
+                'username': user.username
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
