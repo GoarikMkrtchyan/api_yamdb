@@ -19,7 +19,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug',)
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -27,18 +27,19 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug',)
+        fields = ('name', 'slug')
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer()
+    genre = GenreSerializer(many=True)
     rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'category',
-                  'description', 'genre', 'rating',)
+        fields = ('id', 'name', 'year', 'rating', 'description',
+                  'genre', 'category')
+        read_only_fields = ('genre', 'rating')
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -55,8 +56,8 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'category',
-                  'description', 'genre',)
+        fields = ('id', 'name', 'year', 'description',
+                  'genre', 'category')
 
     def to_representation(self, title):
         serializer = TitleReadSerializer(title)
