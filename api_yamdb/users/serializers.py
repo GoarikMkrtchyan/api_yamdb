@@ -86,11 +86,7 @@ class SignUpSerializer(serializers.ModelSerializer):
                 {'email': 'Пользователь с таким email уже существует.'}
             )
 
-        if ((not re.match(r'^[w.@+-]+Z', username))
-           and (username not in ['admin-user',
-                                 'regular-user',
-                                 'superuser',
-                                 'moderator'])):
+        if not re.match(r'^[\w.@+-]+\Z', username):
             raise serializers.ValidationError(
                 {'username': 'Недопустимое имя пользователя'})
 
