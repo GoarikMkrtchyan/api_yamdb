@@ -1,7 +1,5 @@
 from rest_framework import serializers
-
 from users.models import User
-
 from .constants import EMAIL_LENGTH, MAX_LENGTH
 from .utils import send_confirmation_code
 from .validators import validate_username, validate_username_format
@@ -25,14 +23,14 @@ class UserSerializer(serializers.ModelSerializer):
 
         return data
 
-    def validate_role(self, value):
-        valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
-        if value not in valid_roles:
-            raise serializers.ValidationError(
-                f"Недопустимая роль: {value}."
-                f"Допустимые роли: {', '.join(valid_roles)}."
-            )
-        return value
+    # def validate_role(self, value):
+    #     valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
+    #     if value not in valid_roles:
+    #         raise serializers.ValidationError(
+    #             f"Недопустимая роль: {value}."
+    #             f"Допустимые роли: {', '.join(valid_roles)}."
+    #         )
+    #     return value
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -84,7 +82,6 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'username': 'Пользователь с таким username уже существует.'}
             )
-
         return data
 
     def create(self, validated_data):
@@ -95,6 +92,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         # Генерация и отправка кода подтверждения
         user.generate_confirmation_code()
         send_confirmation_code(user)
+        user.save()
         return user
 
 
@@ -104,4 +102,4 @@ class TokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'confirmation_code')
+        fields = ['username', 'confirmation_code']

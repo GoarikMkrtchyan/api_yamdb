@@ -15,7 +15,7 @@ from .serializers import (AdminUserSerializer, SignUpSerializer,
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [IsAdmin]
+    permission_classes = (IsAdmin,)
     http_method_names = ['get', 'post', 'patch', 'delete']
     lookup_field = 'username'
     filter_backends = (SearchFilter,)
@@ -32,7 +32,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().get_object()
 
     @action(detail=False, methods=['get', 'patch'],
-            permission_classes=[IsAuthenticated])
+            permission_classes=(IsAuthenticated,))
     def me(self, request):
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)

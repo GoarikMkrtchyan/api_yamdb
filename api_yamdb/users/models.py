@@ -17,7 +17,7 @@ class User(AbstractUser):
     ROLES = [
         (USER, 'User'),
         (ADMIN, 'Admin'),
-        (MODERATOR, 'Moderator')
+        (MODERATOR, 'Moderator'),
     ]
     username = models.SlugField(
         max_length=MAX_LENGTH, unique=True,

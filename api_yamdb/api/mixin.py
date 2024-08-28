@@ -4,7 +4,7 @@ from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import GenericViewSet
 
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdmin, ReadOnly
 
 
 class CategoryGenreMixinViewSet(
@@ -14,7 +14,7 @@ class CategoryGenreMixinViewSet(
         GenericViewSet):
     """Миксин для ViewSet категорий и жанров."""
 
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
     filter_backends = [SearchFilter]
     search_fields = ['=name']
     lookup_field = 'slug'
