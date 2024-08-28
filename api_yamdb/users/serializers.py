@@ -23,15 +23,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         return data
 
-    # def validate_role(self, value):
-    #     valid_roles = [User.USER, User.ADMIN, User.MODERATOR]
-    #     if value not in valid_roles:
-    #         raise serializers.ValidationError(
-    #             f"Недопустимая роль: {value}."
-    #             f"Допустимые роли: {', '.join(valid_roles)}."
-    #         )
-    #     return value
-
 
 class AdminUserSerializer(serializers.ModelSerializer):
     """Serializer for admin actions."""
