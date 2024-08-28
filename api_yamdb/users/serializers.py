@@ -2,7 +2,7 @@ from rest_framework import serializers
 from users.models import User
 from .constants import EMAIL_LENGTH, MAX_LENGTH
 from .utils import send_confirmation_code
-import re
+from .validators import validate_username, validate_username_format
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -43,7 +43,9 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=EMAIL_LENGTH, required=True)
-    username = serializers.CharField(max_length=MAX_LENGTH, required=True)
+    username = serializers.SlugField(
+        max_length=MAX_LENGTH, required=True,
+        validators=[validate_username, validate_username_format])
 
     class Meta:
         model = User
@@ -53,29 +55,24 @@ class SignUpSerializer(serializers.ModelSerializer):
         email = data.get('email')
         username = data.get('username')
 
-        # Проверяем, если уже есть пользователь
-        # с таким email, но с другим username
-        if User.objects.filter(email=email).exclude(username=username).exists():
+        user = User.objects.filter(email=email, username=username).first()
+
+        if user:
+            # Если пользователь уже существует, вернем его данные
+            # (например, отправим новый код подтверждения)
+            user.generate_confirmation_code()
+            user.save()
+            return data
+
+        if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 {'email': 'Пользователь с таким email уже существует.'}
             )
 
-        # Проверяем, если уже есть пользователь
-        # с таким username, но с другим email
-        if User.objects.filter(username=username).exclude(email=email).exists():
+        if User.objects.filter(username=username).exists():
             raise serializers.ValidationError(
                 {'username': 'Пользователь с таким username уже существует.'}
             )
-
-        if not re.match(r'^[\w.@+-]+\Z', username):
-            raise serializers.ValidationError(
-                {'username': 'Недопустимое имя пользователя'})
-
-        if username.lower() == 'me':
-            raise serializers.ValidationError(
-                {'username': 'Это имя пользователя зарезервировано.'}
-            )
-
         return data
 
     def create(self, validated_data):
