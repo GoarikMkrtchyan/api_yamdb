@@ -26,7 +26,8 @@ def category_create(row):
         else:
             print(f'Категория с id {row[0]} уже существует.')
     except IntegrityError:
-        print(f'Ошибка при создании категории с id {row[0]}: уникальное ограничение нарушено.')
+        print(f'Ошибка при создании категории с id {row[0]}:'
+              'уникальное ограничение нарушено.')
 
 
 def genre_create(row):
